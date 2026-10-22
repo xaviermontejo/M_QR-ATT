@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import {
   StyleSheet,
@@ -13,29 +14,33 @@ import {
   Pressable,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppButton from '@/components/AppButton';
 import Header from '@/components/Header';
-import { COLORS } from '@/constants/colors';
 import { signUp } from '@/lib/auth';
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'student' | 'teacher'>('student');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
+    Keyboard.dismiss();
     setError(null);
 
-    if (!email.trim() || !password || !confirmPassword) {
+    if (!fullName.trim() || !email.trim() || !password || !confirmPassword) {
       setError('All fields are required.');
       return;
     }
@@ -53,10 +58,14 @@ export default function RegisterScreen() {
     setLoading(true);
 
     try {
-      const { data, error: authError } = await signUp(email.trim(), password, {
-        full_name: fullName.trim(),
-        role,
-      });
+      const { data, error: authError } = await signUp(
+        email.trim(),
+        password,
+        {
+          full_name: fullName.trim(),
+          role,
+        }
+      );
 
       if (authError) {
         setError(authError.message);
@@ -65,7 +74,7 @@ export default function RegisterScreen() {
       } else {
         setSuccess(true);
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -73,11 +82,18 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        },
+      ]}
+    >
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
@@ -85,120 +101,282 @@ export default function RegisterScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.headerContainer}>
+            <View style={styles.header}>
               <Header title="QR Attendance" />
             </View>
 
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Register to start recording attendance</Text>
-
             {success ? (
-              <View style={styles.successContainer}>
-                <Text style={styles.successTitle}>Check your email!</Text>
-                <Text style={styles.successText}>
-                  We sent a confirmation link to {email}. Click the link to verify your
-                  account, then come back and sign in.
+              <View style={styles.content}>
+                <View style={styles.brandIcon}>
+                  <Ionicons
+                    name="mail-open-outline"
+                    size={34}
+                    color="#FFFFFF"
+                  />
+                </View>
+
+                <Text style={styles.title}>Check your email!</Text>
+                <Text style={styles.subtitle}>
+                  Your account is almost ready.
                 </Text>
-                <Link href="/login" style={styles.link}>
+
+                <View style={styles.successContainer}>
+                  <Text style={styles.successText}>
+                    We sent a confirmation link to {email}. Open the link to
+                    verify your account, then return to sign in.
+                  </Text>
+                </View>
+
+                <Link href="/login" style={styles.primaryLink}>
                   Back to Sign In
                 </Link>
               </View>
             ) : (
-              <View style={styles.form}>
-                <Text style={styles.label}>Full Name</Text>
-                <TextInput
-                  style={styles.input}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="Your full name"
-                  placeholderTextColor={COLORS.textSecondary}
-                  editable={!loading}
-                />
-
-                <Text style={styles.label}>I am a...</Text>
-                <View style={styles.roleRow}>
-                  <Pressable
-                    style={[styles.roleChip, role === 'student' && styles.roleChipActive]}
-                    onPress={() => setRole('student')}
-                  >
-                    <Text
-                      style={[
-                        styles.roleChipText,
-                        role === 'student' && styles.roleChipTextActive,
-                      ]}
-                    >
-                      Student
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.roleChip, role === 'teacher' && styles.roleChipActive]}
-                    onPress={() => setRole('teacher')}
-                  >
-                    <Text
-                      style={[
-                        styles.roleChipText,
-                        role === 'teacher' && styles.roleChipTextActive,
-                      ]}
-                    >
-                      Teacher
-                    </Text>
-                  </Pressable>
+              <View style={styles.content}>
+                <View style={styles.brandIcon}>
+                  <Ionicons
+                    name="person-add-outline"
+                    size={32}
+                    color="#FFFFFF"
+                  />
                 </View>
 
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="your.email@school.edu"
-                  placeholderTextColor={COLORS.textSecondary}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  editable={!loading}
-                />
+                <Text style={styles.title}>Create account</Text>
+                <Text style={styles.subtitle}>
+                  Register to start recording your attendance.
+                </Text>
 
-                <Text style={styles.label}>Password</Text>
-                <TextInput
-                  style={styles.input}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="At least 6 characters"
-                  placeholderTextColor={COLORS.textSecondary}
-                  secureTextEntry
-                  editable={!loading}
-                />
+                <View style={styles.form}>
+                  <Text style={styles.label}>Full name</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons
+                      name="person-outline"
+                      size={19}
+                      color="#777777"
+                    />
+                    <TextInput
+                      style={styles.input}
+                      value={fullName}
+                      onChangeText={setFullName}
+                      placeholder="Enter your full name"
+                      placeholderTextColor="#888888"
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      editable={!loading}
+                      returnKeyType="next"
+                    />
+                  </View>
 
-                <Text style={styles.label}>Confirm Password</Text>
-                <TextInput
-                  style={styles.input}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="Re-enter your password"
-                  placeholderTextColor={COLORS.textSecondary}
-                  secureTextEntry
-                  editable={!loading}
-                />
+                  <Text style={styles.label}>I am a...</Text>
+                  <View style={styles.roleRow}>
+                    <Pressable
+                      style={[
+                        styles.roleButton,
+                        role === 'student' && styles.roleButtonActive,
+                      ]}
+                      onPress={() => setRole('student')}
+                      disabled={loading}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: role === 'student' }}
+                    >
+                      <Ionicons
+                        name="school-outline"
+                        size={20}
+                        color={role === 'student' ? '#FFFFFF' : '#555555'}
+                      />
+                      <Text
+                        style={[
+                          styles.roleText,
+                          role === 'student' && styles.roleTextActive,
+                        ]}
+                      >
+                        Student
+                      </Text>
+                    </Pressable>
 
-                {error && <Text style={styles.error}>{error}</Text>}
+                    <Pressable
+                      style={[
+                        styles.roleButton,
+                        role === 'teacher' && styles.roleButtonActive,
+                      ]}
+                      onPress={() => setRole('teacher')}
+                      disabled={loading}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: role === 'teacher' }}
+                    >
+                      <Ionicons
+                        name="easel-outline"
+                        size={20}
+                        color={role === 'teacher' ? '#FFFFFF' : '#555555'}
+                      />
+                      <Text
+                        style={[
+                          styles.roleText,
+                          role === 'teacher' && styles.roleTextActive,
+                        ]}
+                      >
+                        Teacher
+                      </Text>
+                    </Pressable>
+                  </View>
 
-                {loading ? (
-                  <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
-                ) : (
-                  <AppButton
-                    theme="primary"
-                    title="Sign Up"
-                    icon="person-add-outline"
-                    onPress={handleRegister}
+                  <Text style={styles.label}>Email address</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons
+                      name="mail-outline"
+                      size={19}
+                      color="#777777"
+                    />
+                    <TextInput
+                      style={styles.input}
+                      value={email}
+                      onChangeText={setEmail}
+                      placeholder="Enter your email"
+                      placeholderTextColor="#888888"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                      autoComplete="email"
+                      editable={!loading}
+                      returnKeyType="next"
+                    />
+                  </View>
+
+                  <Text style={styles.label}>Password</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={19}
+                      color="#777777"
+                    />
+                    <TextInput
+                      style={styles.input}
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="At least 6 characters"
+                      placeholderTextColor="#888888"
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoComplete="new-password"
+                      editable={!loading}
+                      returnKeyType="next"
+                    />
+                    <Pressable
+                      onPress={() => setShowPassword((value) => !value)}
+                      disabled={loading}
+                      hitSlop={10}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        showPassword ? 'Hide password' : 'Show password'
+                      }
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color="#666666"
+                      />
+                    </Pressable>
+                  </View>
+
+                  <Text style={styles.label}>Confirm password</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={19}
+                      color="#777777"
+                    />
+                    <TextInput
+                      style={styles.input}
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      placeholder="Re-enter your password"
+                      placeholderTextColor="#888888"
+                      secureTextEntry={!showConfirmPassword}
+                      autoCapitalize="none"
+                      autoComplete="new-password"
+                      editable={!loading}
+                      returnKeyType="done"
+                      onSubmitEditing={handleRegister}
+                    />
+                    <Pressable
+                      onPress={() =>
+                        setShowConfirmPassword((value) => !value)
+                      }
+                      disabled={loading}
+                      hitSlop={10}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        showConfirmPassword
+                          ? 'Hide confirm password'
+                          : 'Show confirm password'
+                      }
+                    >
+                      <Ionicons
+                        name={
+                          showConfirmPassword
+                            ? 'eye-off-outline'
+                            : 'eye-outline'
+                        }
+                        size={20}
+                        color="#666666"
+                      />
+                    </Pressable>
+                  </View>
+
+                  {error ? (
+                    <View style={styles.errorContainer}>
+                      <Ionicons
+                        name="alert-circle-outline"
+                        size={18}
+                        color="#C62828"
+                      />
+                      <Text style={styles.error} accessibilityRole="alert">
+                        {error}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  <View style={styles.buttonContainer}>
+                    {loading ? (
+                      <ActivityIndicator size="large" color="#111111" />
+                    ) : (
+                      <AppButton
+                        theme="primary"
+                        title="Create Account"
+                        icon="person-add-outline"
+                        onPress={handleRegister}
+                      />
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.signInRow}>
+                  <Text style={styles.signInText}>
+                    Already have an account?{' '}
+                  </Text>
+                  <Link href="/login" style={styles.signInLink}>
+                    Sign In
+                  </Link>
+                </View>
+
+                <View style={styles.securityNote}>
+                  <Ionicons
+                    name="shield-checkmark-outline"
+                    size={16}
+                    color="#777777"
                   />
-                )}
+                  <Text style={styles.securityText}>
+                    Your account details are handled securely.
+                  </Text>
+                </View>
               </View>
             )}
 
-            {!success && (
-              <Link href="/login" style={styles.link}>
-                Already have an account? Sign In
-              </Link>
-            )}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                QR Attendance Management System
+              </Text>
+            </View>
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -209,113 +387,181 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FFFFFF',
   },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    justifyContent: 'center',
+    paddingHorizontal: 26,
+    paddingVertical: 24,
   },
-  headerContainer: {
+  header: {
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 16,
+    marginBottom: 28,
+  },
+  content: {
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
+  },
+  brandIcon: {
+    width: 62,
+    height: 62,
+    borderRadius: 18,
+    backgroundColor: '#111111',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: 4,
+    fontSize: 30,
+    fontWeight: '800',
+    letterSpacing: -0.8,
+    color: '#111111',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
+    fontSize: 14,
+    color: '#707070',
     lineHeight: 21,
-    marginBottom: 32,
+    textAlign: 'center',
+    marginTop: 9,
+    marginBottom: 22,
   },
   form: {
-    marginBottom: 24,
+    width: '100%',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: 6,
-    marginTop: 10,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#222222',
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  inputContainer: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#DADADA',
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
   },
   input: {
-    backgroundColor: COLORS.card,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: COLORS.textPrimary,
+    flex: 1,
+    minHeight: 50,
+    fontSize: 14,
+    color: '#111111',
   },
   roleRow: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 4,
   },
-  roleChip: {
+  roleButton: {
     flex: 1,
-    backgroundColor: COLORS.card,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: 12,
+    minHeight: 50,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#DADADA',
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
   },
-  roleChipActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '14',
+  roleButtonActive: {
+    backgroundColor: '#111111',
+    borderColor: '#111111',
   },
-  roleChipText: {
-    fontSize: 14,
+  roleText: {
+    fontSize: 13,
     fontWeight: '600',
-    color: COLORS.textSecondary,
+    color: '#555555',
   },
-  roleChipTextActive: {
-    color: COLORS.primary,
-    fontWeight: '700',
+  roleTextActive: {
+    color: '#FFFFFF',
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginTop: 14,
+    padding: 11,
+    borderRadius: 9,
+    backgroundColor: '#FFF1F1',
   },
   error: {
-    fontSize: 14,
-    color: COLORS.danger,
-    marginTop: 12,
-    marginBottom: 4,
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#C62828',
   },
-  loader: {
-    marginVertical: 16,
+  buttonContainer: {
+    marginTop: 26,
   },
-  link: {
-    fontSize: 14,
-    color: COLORS.primary,
+  signInRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    marginTop: 24,
+  },
+  signInText: {
+    fontSize: 13,
+    color: '#666666',
+  },
+  signInLink: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111111',
+  },
+  securityNote: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: 22,
+  },
+  securityText: {
+    fontSize: 11,
+    color: '#777777',
     textAlign: 'center',
-    fontWeight: '600',
   },
   successContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
     padding: 20,
-    backgroundColor: COLORS.card,
-    borderRadius: 14,
-  },
-  successTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E2E2E2',
+    borderRadius: 12,
+    marginBottom: 22,
   },
   successText: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: '#666666',
+    lineHeight: 22,
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 16,
+  },
+  primaryLink: {
+    color: '#111111',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#222222',
+    borderRadius: 11,
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  footerText: {
+    fontSize: 11,
+    color: '#888888',
+    textAlign: 'center',
   },
 });
